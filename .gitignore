@@ -1,0 +1,18 @@
+# Compiled binaries
+cybervision
+tools/classes/
+
+# Runtime data
+logs/
+loot/
+
+# TLS certs
+*.crt
+*.key
+*.pem
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.o

