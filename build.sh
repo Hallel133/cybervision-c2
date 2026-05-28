@@ -37,7 +37,7 @@ echo "  [✓] Java tools compiled → tools/classes/"
 
 # ─── Step 2: Compile C++ console ──────────────────────────────────────────────
 echo "  [2/3] Compiling C++ console..."
-g++ -std=c++17 -pthread -O2 -o cybervision console/src/main.cpp 2>&1
+g++ -std=c++17 -pthread -O2 -I console/include -o cybervision console/src/main.cpp 2>&1
 echo "  [✓] C++ console compiled → ./cybervision"
 
 # ─── Step 3: Create directories ──────────────────────────────────────────────
