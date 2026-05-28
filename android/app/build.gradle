@@ -3,6 +3,7 @@ apply plugin: 'com.android.application'
 android {
     namespace 'com.cybervision.client'
     compileSdk 33
+    buildToolsVersion '33.0.2'
 
     defaultConfig {
         applicationId "com.cybervision.client"
@@ -23,8 +24,8 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_11
-        targetCompatibility JavaVersion.VERSION_11
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
     }
 
     // Suppress lint errors for missing resources in CI
