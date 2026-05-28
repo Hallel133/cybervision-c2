@@ -1,0 +1,2 @@
+com.cybervision.client:string/app_name = 0x7f020000
+com.cybervision.client:raw/config = 0x7f010000

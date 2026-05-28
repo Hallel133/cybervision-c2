@@ -1,0 +1,8 @@
+com.cybervision.client.app-pngs-0 /Users/hackler13/cybervision-c2/android/app/build/generated/res/pngs/debug
+com.cybervision.client.app-resValues-1 /Users/hackler13/cybervision-c2/android/app/build/generated/res/resValues/debug
+com.cybervision.client.app-updated_navigation_xml-2 /Users/hackler13/cybervision-c2/android/app/build/generated/updated_navigation_xml/debug
+com.cybervision.client.app-packageDebugResources-3 /Users/hackler13/cybervision-c2/android/app/build/intermediates/incremental/debug/packageDebugResources/merged.dir
+com.cybervision.client.app-packageDebugResources-4 /Users/hackler13/cybervision-c2/android/app/build/intermediates/incremental/debug/packageDebugResources/stripped.dir
+com.cybervision.client.app-debug-5 /Users/hackler13/cybervision-c2/android/app/build/intermediates/merged_res/debug/mergeDebugResources
+com.cybervision.client.app-debug-6 /Users/hackler13/cybervision-c2/android/app/src/debug/res
+com.cybervision.client.app-main-7 /Users/hackler13/cybervision-c2/android/app/src/main/res

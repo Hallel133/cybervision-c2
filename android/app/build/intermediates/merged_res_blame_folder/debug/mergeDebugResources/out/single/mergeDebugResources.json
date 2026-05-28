@@ -1,0 +1,6 @@
+[
+    {
+        "merged": "com.cybervision.client.app-debug-4:/raw_config.properties.flat",
+        "source": "com.cybervision.client.app-main-6:/raw/config.properties"
+    }
+]
