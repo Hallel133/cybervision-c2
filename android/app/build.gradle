@@ -2,12 +2,12 @@ apply plugin: 'com.android.application'
 
 android {
     namespace 'com.cybervision.client'
-    compileSdk 34
+    compileSdk 33
 
     defaultConfig {
         applicationId "com.cybervision.client"
         minSdk 21          // Android 5.0+
-        targetSdk 34       // Android 14
+        targetSdk 33       // Android 13
         versionCode 1
         versionName "3.2"
     }
